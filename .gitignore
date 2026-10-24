@@ -1,0 +1,17 @@
+@"
+# Gradle temporary directories and build artifacts
+.gradle/
+build/
+*/build/
+
+# IDE and Editor files
+.idea/
+*.iml
+.vscode/
+*.ipr
+*.iws
+
+# OS temporary files
+Thumbs.db
+Desktop.ini
+"@ | Set-Content -Path ".gitignore" -Encoding UTF8

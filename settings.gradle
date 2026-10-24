@@ -1,0 +1,7 @@
+// settings.gradle (Root Project Settings)
+rootProject.name = 'multi-module-banking-system'
+
+// Register all 3 sub-projects
+include 'core'
+include 'service'
+include 'web'

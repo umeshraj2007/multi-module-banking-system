@@ -1,0 +1,73 @@
+// build.gradle (Root Project Configuration)
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+allprojects {
+    group = 'com.bank'
+    version = '1.0.0'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+}
+
+// Custom Build-Summary Task (Practical Requirement)
+tasks.register('generateBuildSummary') {
+    group = 'reporting'
+    description = 'Generates an automated build summary report after all modules are built.'
+
+    // Enforce that all subproject build tasks succeed BEFORE generating the summary
+    dependsOn subprojects.collect { "${it.path}:build" }
+
+    def outputFile = layout.buildDirectory.file('reports/build-summary.txt')
+    outputs.file(outputFile)
+
+    doLast {
+        File reportFile = outputFile.get().asFile
+        reportFile.parentFile.mkdirs()
+
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern('yyyy-MM-dd HH:mm:ss'))
+        List<String> moduleNames = subprojects.collect { it.name }
+        List<String> generatedJars = subprojects.collect { sub ->
+            File libsDir = new File(sub.buildDir, 'libs')
+            if (libsDir.exists()) {
+                return libsDir.listFiles()?.findAll { it.name.endsWith('.jar') }?.collect { "${sub.name}/build/libs/${it.name}" } ?: []
+            }
+            return []
+        }.flatten()
+
+        reportFile.text = """============================================================
+AUTOMATED BUILD SUMMARY REPORT
+============================================================
+Project Name            : ${rootProject.name}
+Project Group           : ${rootProject.group}
+Project Version         : ${rootProject.version}
+Included Modules        : ${moduleNames.join(', ')}
+Dependency Order        : web -> service -> core
+Gradle Version          : ${gradle.gradleVersion}
+Java Version            : ${System.getProperty('java.version')}
+Build Completion Time   : ${timestamp}
+Build Completion Status : SUCCESS (All module builds verified)
+------------------------------------------------------------
+Generated JAR Artifacts :
+${generatedJars.collect { "  - " + it }.join('\n')}
+============================================================
+""".stripIndent()
+
+        println "\n[Custom Task] Build summary successfully written to: ${reportFile.absolutePath}"
+    }
+}
