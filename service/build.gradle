@@ -1,0 +1,9 @@
+plugins {
+    id 'java-library'
+}
+
+description = 'Banking transaction processing service module'
+
+dependencies {
+    api project(':core')
+}
