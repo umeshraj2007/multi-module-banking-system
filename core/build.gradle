@@ -1,0 +1,6 @@
+// core/build.gradle
+plugins {
+    id 'java-library'
+}
+
+description = 'Core banking domain module containing account state'
