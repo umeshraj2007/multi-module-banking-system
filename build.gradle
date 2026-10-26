@@ -5,3 +5,31 @@ subprojects {
     repositories { mavenCentral() }
     java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 }
+
+// Custom Task: Generate Build Summary / Version File
+tasks.register('generateBuildSummary') {
+    group = 'reporting'
+    description = 'Generates an automated build summary report and version file.'
+    dependsOn subprojects.collect { "${it.path}:build" }
+
+    def summaryFile = layout.buildDirectory.file('reports/build-summary.txt')
+    outputs.file(summaryFile)
+
+    doLast {
+        File file = summaryFile.get().asFile
+        file.parentFile.mkdirs()
+        file.text = """============================================================
+BUILD SUMMARY & VERSION REPORT
+============================================================
+Project Name    : ${rootProject.name}
+Project Version : 1.0.0
+Gradle Version  : ${gradle.gradleVersion}
+JVM Version     : ${System.getProperty('java.version')}
+Modules Built   : core, service, web
+Dependency Path : web -> service -> core
+Status          : SUCCESS
+============================================================
+""".stripIndent()
+        println "\n[Custom Task] Build summary successfully written to: ${file.absolutePath}"
+    }
+}
